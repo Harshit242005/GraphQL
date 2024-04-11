@@ -7,9 +7,15 @@ const typeDefs = `#graphql
     author: String
   }
 
+  # writing the first mutation
+  type Mutation {
+    createAuthor(title: String!, author: String!): Book
+  }
+
   
   type Query {
     books: [Book]
+    getAuthors: [String]
   }
 `;
 const books = [
@@ -25,7 +31,24 @@ const books = [
 const resolvers = {
     Query: {
         books: () => books,
+        // writing an another resolver query to get the auth names
+        // getAuthor: () => {
+        //     books['author']
+        // }
+        getAuthors: () => books.map(book => book.author),
     },
+    // define the mutation functions
+    Mutation: {
+        createAuthor: (parent, args) => {
+            const { title, author } = args; // Destructure input arguments
+            // Create a new author object
+            const newAuthor = { title, author };
+            // Add the new author to the books array
+            books.push(newAuthor);
+            // Return the created author
+            return newAuthor;
+        }
+    }
 };
 const server = new ApolloServer({
     typeDefs,
