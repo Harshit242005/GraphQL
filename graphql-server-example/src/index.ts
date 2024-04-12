@@ -1,65 +1,53 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 
+import * as neo4j from 'neo4j-driver';
 
+const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'aszxcvbnm'));
+// define both the tydef and resolvers 
 const typeDefs = `#graphql
- 
-  type Book {
-    title: String
-    author: String
-  }
 
-  # writing the first mutation
-  type Mutation {
-    createAuthor(title: String!, author: String!): Book
-  }
+type Person {
+  name: String!
+  age: Int!
+}
 
-  
-  type Query {
-    books: [Book]
-    getAuthors: [String]
-  }
-`;
+type Query {
+  persons: [Person!]!
+}
 
+type Mutation {
+  createPerson(name: String!, age: Int!): Person
+}
 
-const books = [
-    {
-        title: 'The Awakening',
-        author: 'Kate Chopin',
-    },
-    {
-        title: 'City of Glass',
-        author: 'Paul Auster',
-    },
-];
-
+`
 
 const resolvers = {
-    Query: {
-        books: () => books,
-        // writing an another resolver query to get the auth names
-        // getAuthor: () => {
-        //     books['author']
-        // }
-        getAuthors: () => books.map(book => book.author), 
-    },
+  Query: {
+    persons: async () => {
+      const session = driver.session(); //  creating the session
+      try {
+        const result = await session.run('MATCH (p:Person) RETURN p');
+        return result.records.map(record => record.get('p').properties);
+      } finally {
+        session.close();
+      }
+    }
+  },
 
-    // define the mutation functions
-   
-        Mutation: {
-            createAuthor: (parent, args) => {
-              const { title, author } = args; // Destructure input arguments
-              // Create a new author object
-              const newAuthor = { title, author };
-              // Add the new author to the books array
-              books.push(newAuthor);
-              // Return the created author
-              return newAuthor;
-            }
-          }
-    
-};
-
+  Mutation: {
+    createPerson: async (parent, args) => {
+      const {name, age} = args;
+      const session = driver.session();
+      try {
+        const result = await session.run('CREATE (p:Person {name: $name, age: $age}) RETURN p', { name: name, age: age });
+        return result.records[0].get('p').properties;
+      } finally {
+        session.close();
+      }
+    }
+  }
+}
 
 const server = new ApolloServer({
     typeDefs,
@@ -73,3 +61,35 @@ const { url } = await startStandaloneServer(server, {
 });
 
 console.log(`🚀  Server ready at: ${url}`);
+
+
+
+
+
+// // Define a function to add data to the database
+// const addData = async () => {
+//   let session;
+
+//   try {
+//       // Create a session
+//       session = driver.session();
+
+//       // Run a Cypher query to add data
+//       const result = await session.run(
+//           'CREATE (p:Person {name: $name, age: $age}) RETURN p',
+//           { name: 'John', age: 30 }
+//       );
+
+//       // Log the result
+//       console.log('Data added successfully:', result.records[0].get('p').properties);
+//   } catch (error) {
+//       console.error('Failed to add data:', error);
+//   } finally {
+//       // Close the session
+//       if (session) {
+//           session.close();
+//       }
+//   }
+// };
+
+// addData();
