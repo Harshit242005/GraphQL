@@ -84,13 +84,16 @@ const resolvers = {
       const session = driver.session();
       try {
         const result = await session.run(
-          'MATCH (l:Learning {name: $learningName})-[:BelongsTo]->(f:File) RETURN f',
+          'MATCH (l:Learning {name: $learningName})<-[:BelongsTo]-(f:File) RETURN f',
           { learningName }
         );
+
+        console.log(`all files query result is: ${result}`);
         // Extracting properties of files from the result
         const files = result.records.map(record => {
           const file = record.get('f').properties;
           // Include learningName in the file properties
+          file.id = record.get('f').identity.toString(); // Ensure ID is included
           file.learningName = learningName;
           return file;
         });
@@ -100,6 +103,7 @@ const resolvers = {
         await session.close();
       }
     },
+
 
     getLearningByName: async (parent, { name }) => {
       const session = driver.session();
@@ -131,7 +135,10 @@ const resolvers = {
           return { id: '', name: '', learningName: '', content: '' }; // Return an empty Learning object
         }
         console.log(result.records[0].get('f').properties);
-        return result.records[0].get('f').properties;
+        return {
+          id: result.records[0].get('f').properties.id.toString(),
+          content: result.records[0].get('f').properties.content
+        }
       } finally {
         await session.close();
       }
@@ -218,13 +225,13 @@ const resolvers = {
           `,
           { name }
         );
-    
+
         return result.records[0].get('deletedCount').toNumber() > 0;
       } finally {
         await session.close();
       }
     },
-    
+
 
     deleteFile: async (parent, { learningName, fileName }) => {
       const session = driver.session();
@@ -269,7 +276,7 @@ const resolvers = {
     }
   },
 
-  
+
 };
 
 

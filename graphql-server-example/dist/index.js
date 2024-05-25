@@ -76,11 +76,13 @@ const resolvers = {
         getAllFiles: async (parent, { learningName }) => {
             const session = driver.session();
             try {
-                const result = await session.run('MATCH (l:Learning {name: $learningName})-[:BelongsTo]->(f:File) RETURN f', { learningName });
+                const result = await session.run('MATCH (l:Learning {name: $learningName})<-[:BelongsTo]-(f:File) RETURN f', { learningName });
+                console.log(`all files query result is: ${result}`);
                 // Extracting properties of files from the result
                 const files = result.records.map(record => {
                     const file = record.get('f').properties;
                     // Include learningName in the file properties
+                    file.id = record.get('f').identity.toString(); // Ensure ID is included
                     file.learningName = learningName;
                     return file;
                 });

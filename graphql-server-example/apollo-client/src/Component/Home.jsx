@@ -10,10 +10,8 @@ function Home() {
     const navigate = useNavigate();
     const { loading, error, data } = useQuery(GET_ALL_LEARNING);
 
-
-
-    if (loading) return <p>Loading</p>;
-    if (error) return <p>Found an error in loading {error.message}</p>
+    // if (loading) return <p>Loading</p>;
+    // if (error) return <p>Found an error in loading {error.message}</p>
 
     const selectedLearning = (learningName) => {
         navigate(`/Files/${learningName}`);
@@ -38,7 +36,7 @@ function Home() {
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [newLearningName, setNewLearningName] = useState('');
-    
+
     const handleCreateLearning = async () => {
 
         try {
@@ -57,15 +55,19 @@ function Home() {
     return (
         <div>
             <div>
-                {data.getAllLearning.map((learning) => (
+                {data && data.getAllLearning.map((learning) => (
                     <div key={learning.id}>
                         <button onClick={() => selectedLearning(learning.name)}>{learning.name}</button>
                     </div>
                 ))}
             </div>
-
-            <input type="text" value={newLearningName} onChange={(e) => setNewLearningName(e.target.value)} />
-            <button onClick={handleCreateLearning}>Create Learning</button>
+           
+                <div>
+                    <input type="text" value={newLearningName} onChange={(e) => setNewLearningName(e.target.value)} />
+                    <button onClick={handleCreateLearning}>Create Learning</button>
+                </div>
+          
+          
         </div>
     )
 }
