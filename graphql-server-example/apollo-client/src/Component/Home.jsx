@@ -8,6 +8,7 @@ import { CREATE_LEARNING } from '../apollo-server/mutation';
 
 function Home() {
     const navigate = useNavigate();
+    // eslint-disable-next-line no-unused-vars
     const { loading, error, data } = useQuery(GET_ALL_LEARNING);
 
     // if (loading) return <p>Loading</p>;

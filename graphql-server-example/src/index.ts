@@ -3,7 +3,7 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 import { Neo4jGraphQL } from '@neo4j/graphql';
 import * as neo4j from 'neo4j-driver';
 
-const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'aszxcvbnm'));
+const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', '1q2w3e4r5t6y'));
 
 
 // define both the tydef and resolvers 
@@ -46,7 +46,7 @@ type Mutation {
   updateFile(learningName: String!, fileName: String!, content: String!): File
 
   # delete the learing with the name
-  deleteLearning(learningName: String!): Learning!
+  deleteLearning(learningName: String!): Boolean
 
 
   # delete the file 
@@ -191,6 +191,7 @@ const resolvers = {
 
     // mutation for creating the file 
     createFile: async (parent, { learningName, name, content }) => {
+      console.log('executing');
       const session = driver.session();
       try {
         // Create the file node and establish the relationship with the learning
@@ -202,6 +203,7 @@ const resolvers = {
         );
         // Extract the created file node from the result
         const createdFile = result.records[0].get('f');
+        console.log(`create file return ${createdFile}`);
         // Return the properties of the created file
         return {
           id: createdFile.identity.toString(),
@@ -214,19 +216,24 @@ const resolvers = {
       }
     },
 
+
+    // delete the learning from this mutation
     deleteLearning: async (parent, { name }) => {
       const session = driver.session();
       try {
         const result = await session.run(
           `
-          MATCH (l:Learning {name: $name})
-          DETACH DELETE l
-          RETURN COUNT(l) AS deletedCount
+          MATCH (l:Learning {name: $name})<-[r:BelongsTo]-(f:File)
+      DETACH DELETE l, f
           `,
           { name }
         );
 
-        return result.records[0].get('deletedCount').toNumber() > 0;
+        // Check the summary of the operation to see how many nodes were deleted
+        const nodesDeleted = result.summary.counters.updates().nodesDeleted;
+
+        // Return true if nodes were deleted, false otherwise
+        return nodesDeleted > 0;
       } finally {
         await session.close();
       }
