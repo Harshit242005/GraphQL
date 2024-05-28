@@ -148,6 +148,7 @@ const resolvers = {
 
 
 
+
   },
 
 
@@ -189,7 +190,7 @@ const resolvers = {
     },
 
 
-    // mutation for creating the file 
+    // Mutation for creating the file
     createFile: async (parent, { learningName, name, content }) => {
       console.log('executing');
       const session = driver.session();
@@ -215,6 +216,7 @@ const resolvers = {
         await session.close();
       }
     },
+
 
 
     // delete the learning from this mutation

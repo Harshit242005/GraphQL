@@ -22,7 +22,7 @@ export const GET_ALL_FILES = gql`
 export const GET_FILE_BY_NAME = gql`
 query GetFileByName($fileName: String!) {
   getFileByName(fileName: $fileName) {
-    id,
+    id
     content
   }
 }
